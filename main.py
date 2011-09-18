@@ -57,10 +57,34 @@ class UserHandler(RenderedHandler):
         thisplayer.put()
         self.redirect("/")
 
+"""
+        ("/make", CreateHandler)
+class CreateHandler(RenderedHandler):
+    def get(self):
+        l = Land()
+        l.put()
+        rt = ResourceType()
+        rt.put()
+        r = Resource()
+        r.put()
+        lr = LandResources()
+        lr.put()
+        lt = LandType()
+        lt.put()
+        bt = BuildingType()
+        bt.put()
+        rc = ResourceCombination()
+        rc.put()
+        b = Building()
+        b.put()
+        ob = OrderBook()
+        ob.put()
+"""
+
 def main():
     handlers = [
         ("/user", UserHandler),
-        ("/", MainHandler)
+        ("/", MainHandler),
     ]
     application = webapp.WSGIApplication(handlers,
                                          debug=True)
