@@ -7,6 +7,7 @@ class Player(db.Model):
     capital = db.IntegerProperty()
 
 class Land(db.Model):
+    owner = db.ReferenceProperty(Player)
     x = db.IntegerProperty()
     y = db.IntegerProperty()
     value = db.IntegerProperty()
@@ -30,7 +31,7 @@ class LandResources(db.Model):
     maximumQuantity = db.IntegerProperty()
 
 class LandType(db.Model):
-    resource = db.ReferenceProperty(Land)
+    land = db.ReferenceProperty(Land)
     minGrowthRate = db.FloatProperty()
     maxGrowthRate = db.FloatProperty()
     minExploitationRate = db.FloatProperty()
@@ -39,12 +40,12 @@ class LandType(db.Model):
 
 class BuildingType(db.Model):
     name = db.StringProperty(default="")
-    #inputResources = db.ListProperty(ResourceCombination)
-    #outputResources = db.ListProperty(ResourceCombination)
     workDuration = db.IntegerProperty()
     constructionDuration = db.IntegerProperty()
     #upgradeableTo = db.ReferenceProperty(Building)
 
+# This gives more information to a building type - 
+# an input resource, output resource, how much it takes to make
 class ResourceCombination(db.Model):
     resource = db.ReferenceProperty(Resource)
     quantity = db.IntegerProperty()
@@ -52,7 +53,7 @@ class ResourceCombination(db.Model):
     buildingType = db.ReferenceProperty(BuildingType)
 
 class Building(db.Model):
-    resource = db.ReferenceProperty(Land)
+    land = db.ReferenceProperty(Land)
     buildingType = db.ReferenceProperty(BuildingType)
     buildingState = db.StringProperty()
     lastEvent = db.DateTimeProperty()
