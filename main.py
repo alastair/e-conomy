@@ -15,12 +15,23 @@
 # limitations under the License.
 #
 from google.appengine.ext import webapp
+from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp import util
 
+import os
+import os.path
 
-class MainHandler(webapp.RequestHandler):
+from model import *
+
+class RenderedHandler(webapp.RequestHandler):
+    def render(self, templatefile, data):
+        path = os.path.join(os.path.dirname(__file__), "templates", templatefile)
+        self.response.out.write(template.render(path, data))
+
+class MainHandler(RenderedHandler):
     def get(self):
-        self.response.out.write('Hello world!')
+        data = {"money": 100}
+        self.render("index.html", data)
 
 
 def main():
