@@ -45,7 +45,7 @@ class BuildingType(db.Model):
     constructionDuration = db.IntegerProperty()
     #upgradeableTo = db.ReferenceProperty(Building)
 
-class ResourceType(db.Model):
+class ResourceCombination(db.Model):
     resource = db.ReferenceProperty(Resource)
     quantity = db.IntegerProperty()
     type = db.StringProperty() #input or output
