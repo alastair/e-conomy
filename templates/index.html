@@ -1,8 +1,13 @@
+{% if user %}
 <h2>Me</h2>
+Name: <form method="post" action="/user"><input type="text" value="{{username}}" name="username"><input type="submit" value="set"><br>
 Money: {{money}}
 <h2>Land</h2>
 <h2>Buildings</h2>
 <h2>Resources</h2>
 <h2>Orders</h2>
 
-
+<a href="{{logout_url}}">logout</a>
+{% else %}
+<a href="{{login_url}}">login</a>
+{% endif %}
