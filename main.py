@@ -19,46 +19,87 @@ class RenderedHandler(webapp.RequestHandler):
         self.response.out.write(template.render(path, data))
 
 class MainHandler(RenderedHandler):
+    def getDefaultCapital(self):
+        return 1000
+
     def get(self):
         user = users.get_current_user()
 
         n = ""
+        money = 0
+        numLand = 0
+        landList = []
+        buildingList = []
         if user:
             q = db.GqlQuery("SELECT * FROM Player WHERE user = :1", user)
             thisuser = q.get()
             if not thisuser:
                 thisuser = Player()
+                thisuser.name = user.nickname()
+                thisuser.capital = self.getDefaultCapital()
                 thisuser.put()
-            if not thisuser.name:
-                n = user
-            else:
-                n = thisuser.name
-        data = {"money": 100,
+            n = thisuser.name
+            money = thisuser.capital
+
+            landList = Land.all()
+            landList.filter("owner =", thisuser)
+            numLand = landList.count()
+            buildingList = []
+            for l in landList:
+                bld = Building.all()
+                bld.filter("land =",l)
+                for b in bld:
+                    buildingList.append(b)
+
+        data = {"money": money,
                 "username": n,
                 "login_url": users.create_login_url(self.request.uri),
                 "logout_url": users.create_logout_url(self.request.uri),
-                "user": user
+                "user": user,
+                "numberLand": numLand,
+                "land": landList,
+                "buildings": buildingList
                 }
+ 
         self.render("index.html", data)
+
+class BuyHandler(RenderedHandler):
+    def getValueOfLand(self, land):
+        return 100
+
+    def buyLand(self, player, value):
+        if player.capital < value:
+            return
+        l = Land()
+        l.value = value
+        l.owner = player
+        l.put()
+        player.capital -= value
+        player.put()
+
+    def post(self):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+        q = db.GqlQuery("SELECT * FROM Player WHERE user = :1", user)
+        player = q.get()
+        self.buyLand(player, self.getValueOfLand(1))
+        self.redirect("/")
 
 # Handler to get name change information, store it, and redirect back to the homepage
 class UserHandler(RenderedHandler):
     def post(self):
         user = users.get_current_user()
         if not user:
-            logging.debug("redirect")
             self.redirect(users.create_login_url(self.request.uri))
         user = users.get_current_user()
         playerlist = Player.all()
         playerlist.filter("user =", user)
         thisplayer = playerlist.get()
         thisplayer.name = cgi.escape(self.request.get("username"))
-        logging.debug("playername: %s", thisplayer.name)
         thisplayer.put()
         self.redirect("/")
 
-"""
-        ("/make", CreateHandler)
 class CreateHandler(RenderedHandler):
     def get(self):
         l = Land()
@@ -79,12 +120,13 @@ class CreateHandler(RenderedHandler):
         b.put()
         ob = OrderBook()
         ob.put()
-"""
 
 def main():
     handlers = [
         ("/user", UserHandler),
         ("/", MainHandler),
+        ("/make", CreateHandler),
+        ("/buy", BuyHandler)
     ]
     application = webapp.WSGIApplication(handlers,
                                          debug=True)
