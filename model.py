@@ -1,8 +1,8 @@
 
-from google.appendgine.ext import db
+from google.appengine.ext import db
 
 class Player(db.Model):
-    user = db.UserPropert(auto_current_user_add=True)
+    user = db.UserProperty(auto_current_user_add=True)
     name = db.StringProperty(default="")
     capital = db.IntegerProperty()
 
@@ -10,6 +10,16 @@ class Land(db.Model):
     x = db.IntegerProperty()
     y = db.IntegerProperty()
     value = db.IntegerProperty()
+
+class ResourceType(db.Model):
+    name = db.StringProperty(default="")
+    valueHalfLife = db.IntegerProperty()
+
+class Resource(db.Model):
+    land = db.ReferenceProperty(Land)
+    resourceType = db.ReferenceProperty(ResourceType)
+    quantity = db.IntegerProperty()
+    birthTimeStamp = db.DateTimeProperty()
 
 class LandResources(db.Model):
     land = db.ReferenceProperty(Land)
@@ -27,33 +37,25 @@ class LandType(db.Model):
     maxExploitationRate = db.IntegerProperty()
     maxMaximumQuantity = db.IntegerProperty()
 
-class Building(db.Model):
-    resource = db.ReferenceProperty(Land)
-    buildingType = db.StringProperty()
-    buildingState = db.StringProperty()
-    lastEvent = db.DateTimeProperty()
-
-class Resource(db.Model):
-    land = db.ReferenceProperty(Land)
-    resourceType = db.ReferenceProperty(ResourceType)
-    quantity = db.IntegerProperty()
-    birthTimeStamp = db.DateTimeProperty()
-
-class ResourceType(db.Model):
-    name = db.StringProperty(default="")
-    valueHalfLife = db.IntegerProperty()
-
-class ResourceCombination(db.Model):
-    resource = db.ReferenceType(Resource)
-    quantity = db.IntegerProperty()
-
 class BuildingType(db.Model):
     name = db.StringProperty(default="")
-    inputResources = db.ListProperty(db.ReferenceType(ResourceCombination))
-    outputResources = db.ListProperty(db.ReferenceType(ResourceCombination))
+    #inputResources = db.ListProperty(ResourceCombination)
+    #outputResources = db.ListProperty(ResourceCombination)
     workDuration = db.IntegerProperty()
     constructionDuration = db.IntegerProperty()
-    upgradeableTo = db.ReferenceProperty(Building)
+    #upgradeableTo = db.ReferenceProperty(Building)
+
+class ResourceType(db.Model):
+    resource = db.ReferenceProperty(Resource)
+    quantity = db.IntegerProperty()
+    type = db.StringProperty() #input or output
+    buildingType = db.ReferenceProperty(BuildingType)
+
+class Building(db.Model):
+    resource = db.ReferenceProperty(Land)
+    buildingType = db.ReferenceProperty(BuildingType)
+    buildingState = db.StringProperty()
+    lastEvent = db.DateTimeProperty()
 
 class OrderBook(db.Model):
     player = db.ReferenceProperty(Player)
