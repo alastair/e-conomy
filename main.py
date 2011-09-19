@@ -69,6 +69,7 @@ class MainHandler(RenderedHandler):
         resourceTypeList = sorted(resourceTypeList, key=lambda r: r.name)
 
         offers = Offer.all()
+	offers.filter('quantity >', 0)
 
         data = {"money": player.capital,
                 "username": player.name,
@@ -123,7 +124,7 @@ class OrderHandler(RenderedHandler):
         # XXX: expiry, isDivisible
         o.put()
 
-    def matchOffer(self, transactType, player, item, unitprice, quantity):
+    def matchOffer(self, transactType, player, item, unitprice, quantity, delivery=None):
 	user = users.get_current_user()
         resType = ResourceType.get_by_id(item)
         matchType = ''
@@ -174,7 +175,6 @@ class OrderHandler(RenderedHandler):
 		t.actualQuantity = q
 		t.actualPrice = o.offeredPrice
 		t.put()
-		player.capital = player.capital 
 
 	    if toFulfill < o.quantity:
 		o.quantity = o.quantity - toFulfill
@@ -206,7 +206,8 @@ class OrderHandler(RenderedHandler):
             quantity = cgi.escape(self.request.get("buy_quantity"))
             unitprice = cgi.escape(self.request.get("buy_unitprice"))
             item = cgi.escape(self.request.get("buy_item"))
-	    f = self.matchOffer("buy", player, int(item), int(unitprice), int(quantity))
+	    delivery = cgi.escape(self.request.get("delivery_loc"))
+	    f = self.matchOffer("buy", player, int(item), int(unitprice), int(quantity), int(delivery))
 	    if f > 0:
 		self.makeOffer("buy", player, int(item), int(unitprice), f)
         self.redirect("/")
