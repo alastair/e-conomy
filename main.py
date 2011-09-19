@@ -123,6 +123,36 @@ class OrderHandler(RenderedHandler):
         # XXX: expiry, isDivisible
         o.put()
 
+    def matchOffer(self, transactType, player, item, unitprice, quantity):
+        resType = ResourceType.get_by_id(item)
+        matchType = '';
+
+        if transactType == "buy":
+            matchType = 'sell'
+	else:
+            matchType = 'buy'
+
+        # We want to look for any corresponding "sell" offers
+        q = db.GqlQuery("SELECT * FROM Offer WHERE resourceType = :1 AND transactionType = :2 AND quantity >= :3", resType, matchType, quantity)
+        r = q.get()
+
+        if not r:
+	    return False
+        
+        # FIXME: I have no idea how AppEngine works --gdpe, 4:09am 
+	r.filter('user !=', player)
+
+        if matchType == 'sell':
+            # We've found a seller who will sell to us. Check the price is less than or equal to our offer.
+            r.filter('offeredPrice <=', unitprice)
+        else:
+            r.filter('offeredPrice >=', unitprice)
+
+	if r:
+	    self.redirect("/existing-offer/" + str(r))
+	else:
+	    return False
+
     def post(self):
         player = self.getPlayer()
         orderType = cgi.escape(self.request.get("order"))
@@ -131,12 +161,14 @@ class OrderHandler(RenderedHandler):
             quantity = cgi.escape(self.request.get("sell_quantity"))
             unitprice = cgi.escape(self.request.get("sell_unitprice"))
             item = cgi.escape(self.request.get("sell_item"))
+	    self.matchOffer("sell", player, int(item), int(unitprice), int(quantity))
             self.makeOffer("sell", player, int(item), int(unitprice), int(quantity))
         elif orderType == "place order":
             # buy
             quantity = cgi.escape(self.request.get("buy_quantity"))
             unitprice = cgi.escape(self.request.get("buy_unitprice"))
             item = cgi.escape(self.request.get("buy_item"))
+	    self.matchOffer("buy", player, int(item), int(unitprice), int(quantity))
             self.makeOffer("buy", player, int(item), int(unitprice), int(quantity))
         self.redirect("/")
 
