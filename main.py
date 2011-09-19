@@ -132,23 +132,12 @@ class OrderHandler(RenderedHandler):
 	else:
             matchType = 'buy'
 
-        # We want to look for any corresponding "sell" offers
-        q = db.GqlQuery("SELECT * FROM Offer WHERE resourceType = :1 AND transactionType = :2 AND quantity >= :3", resType, matchType, quantity)
-        r = q.get()
+	r = Offer.all()
+        r.filter('resourceType =', resType)
+	#r.filter('player !=', player)
+        #r.filter('transactionType =', matchType)
 
-        if not r:
-	    return False
-        
-        # FIXME: I have no idea how AppEngine works --gdpe, 4:09am 
-	r.filter('user !=', player)
-
-        if matchType == 'sell':
-            # We've found a seller who will sell to us. Check the price is less than or equal to our offer.
-            r.filter('offeredPrice <=', unitprice)
-        else:
-            r.filter('offeredPrice >=', unitprice)
-
-	if r:
+	if len(r.fetch(5)) >= 1:
 	    self.redirect("/existing-offer/" + str(r))
 	else:
 	    return False
