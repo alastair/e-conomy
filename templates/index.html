@@ -29,17 +29,30 @@ Land units owned: {{numberLand}}:
 {% endfor %}
 </ul>
 <h2>Orders</h2>
-<h3>Outstanding orders</h3>
-{% for o in orders %}
-
+<h3>All Outstanding orders</h3>
+{% for o in offers %}
+<li>{{o.player.name}} wants to {{o.transactionType}} {{o.quantity}} {{o.resourceType.name}} at {{o.offeredPrice}} each
 {% endfor %}
 
+<h3>Make an order</h3>
 <form method="post" action="/order">
-I want to sell <input type="text" size="3" name="quantity"> items of xx at $<input type="text" size="3" name="unitprice"> each
+I want to sell <input type="text" size="3" name="sell_quantity"> items of 
+<select size="1" name="sell_item">
+{% for r in resources %}
+<option value="{{r.key.id}}">{{r.resourceType.name}}</option>
+{% endfor %}
+</select>
+ at $<input type="text" size="3" name="sell_unitprice"> each
 <input type="submit" value="place offer" name="order">
 
 <p>
-I want to buy <input type="text" size="3" name="quantity"> items of xx at $<input type="text" size="3" name="unitprice"> each
+I want to buy <input type="text" size="3" name="buy_quantity"> items of 
+<select size="1" name="buy_item">
+{% for r in resourceTypes %}
+<option value="{{r.key.id}}">{{r.name}}</option>
+{% endfor %}
+</select>
+at $<input type="text" size="3" name="buy_unitprice"> each
 <input type="submit" value="place order" name="order">
 </form>
 

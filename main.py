@@ -65,6 +65,11 @@ class MainHandler(RenderedHandler):
             for r in res:
                 resourceList.append(r)
 
+        resourceTypeList = ResourceType.all()
+        resourceTypeList = sorted(resourceTypeList, key=lambda r: r.name)
+
+        offers = Offers.all()
+
         data = {"money": player.capital,
                 "username": player.name,
                 "login_url": users.create_login_url(self.request.uri),
@@ -73,7 +78,9 @@ class MainHandler(RenderedHandler):
                 "numberLand": numLand,
                 "land": landList,
                 "buildings": buildingList,
-		        "resources": resourceList
+                "resources": resourceList,
+                "resourceTypes": resourceTypeList,
+                "outstandingOrders": offers
                 }
  
         self.render("index.html", data)
