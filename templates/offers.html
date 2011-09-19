@@ -1,0 +1,6 @@
+<h1>Matching Offers</h1>
+<ul>
+{% for o in offers %}
+<li>{{o.player.name}} wants to {{o.transactionType}} {{o.quantity}} {{o.resourceType.name}} at ${{o.offeredPrice}} each
+{% endfor %}
+</ul>

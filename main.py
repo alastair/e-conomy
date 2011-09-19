@@ -124,23 +124,29 @@ class OrderHandler(RenderedHandler):
         o.put()
 
     def matchOffer(self, transactType, player, item, unitprice, quantity):
+	user = users.get_current_user()
         resType = ResourceType.get_by_id(item)
-        matchType = '';
+        matchType = ''
 
+	r = Offer.all()
         if transactType == "buy":
             matchType = 'sell'
 	else:
             matchType = 'buy'
 
-	r = Offer.all()
         r.filter('resourceType =', resType)
-	#r.filter('player !=', player)
-        #r.filter('transactionType =', matchType)
+        r.filter('transactionType =', matchType)
 
-	if len(r.fetch(5)) >= 1:
-	    self.redirect("/existing-offer/" + str(r))
-	else:
-	    return False
+	offers = []
+	for of in r:
+	    if of.player == player:
+		continue
+
+	    offers.append(of)
+
+	data = {'user': user, 'offers': offers}
+    
+	self.render("offers.html", data)
 
     def post(self):
         player = self.getPlayer()
@@ -159,7 +165,7 @@ class OrderHandler(RenderedHandler):
             item = cgi.escape(self.request.get("buy_item"))
 	    self.matchOffer("buy", player, int(item), int(unitprice), int(quantity))
             self.makeOffer("buy", player, int(item), int(unitprice), int(quantity))
-        self.redirect("/")
+        #self.redirect("/")
 
 class CreateHandler(RenderedHandler):
     def get(self):
