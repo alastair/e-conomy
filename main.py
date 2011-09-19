@@ -165,9 +165,12 @@ class OrderHandler(RenderedHandler):
 	    if o.quantity == 0:
 		continue
 
+	    nFilled = 0
+
 	    if toFulfill >= o.quantity:
 		toFulfill = toFulfill - o.quantity
 		q = o.quantity
+		nFilled = q
 		o.quantity = 0
 		o.put()
 		t = Transaction()
@@ -180,6 +183,7 @@ class OrderHandler(RenderedHandler):
 	    if toFulfill < o.quantity:
 		o.quantity = o.quantity - toFulfill
 		o.put()
+		nFilled = toFulfill
 		t = Transaction()
 		t.offer = o
 		t.otherParty = o.player
@@ -188,8 +192,33 @@ class OrderHandler(RenderedHandler):
 		t.put()
 		toFulfill = 0
 
+	    if transactType == 'sell':
+		self.doCurrencyTransfer(nFilled * o.offeredPrice, o.player, player)
+	    else:
+		self.doCurrencyTransfer(nFilled * o.offeredPrice, player, o.player)
+
 	return toFulfill
-	   
+
+    def doResourceTransfer(self,resource,quantity,destination):
+	if resource.quantity <= quantity:
+	    resource.land = destination
+	    resource.put()
+	else:
+	    # We need to split the resource
+	    newres = Resource()
+	    newres.land = destination
+	    newres.quantity = quantity
+	    newres.birthTimeStamp = resource.birthTimeStamp
+	    newres.resourceType = resource.resourceType
+	    resource.quantity = resource.quantity - quantity
+	    newres.put()
+	    resource.put()
+
+    def doCurrencyTransfer(self,amount,src,target):
+	src.capital = src.capital - amount
+	target.capital = target.capital + amount
+	src.put()
+	target.put()	   
  
     def post(self):
         player = self.getPlayer()
