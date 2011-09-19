@@ -113,16 +113,32 @@ class UserHandler(RenderedHandler):
         self.redirect("/")
 
 class OrderHandler(RenderedHandler):
+    def makeOffer(self, transactType, player, item, unitprice, quantity):
+        o = Offer()
+        o.player = player
+        o.transactionType = transactType
+        o.resourceType = ResourceType.get_by_id(item)
+        o.quantity = quantity
+        o.offeredPrice = unitprice
+        # XXX: expiry, isDivisible
+        o.put()
+
     def post(self):
         player = self.getPlayer()
         orderType = cgi.escape(self.request.get("order"))
-        quantity = cgi.escape(self.request.get("quantity"))
-        unitprice = cgi.escape(self.request.get("unitprice"))
-        item = cgi.escape(self.request.get("item"))
         if orderType == "place offer":
-            pass
+            # sell
+            quantity = cgi.escape(self.request.get("sell_quantity"))
+            unitprice = cgi.escape(self.request.get("sell_unitprice"))
+            item = cgi.escape(self.request.get("sell_item"))
+            self.makeOffer("sell", player, int(item), int(unitprice), int(quantity))
         elif orderType == "place order":
-            pass
+            # buy
+            quantity = cgi.escape(self.request.get("buy_quantity"))
+            unitprice = cgi.escape(self.request.get("buy_unitprice"))
+            item = cgi.escape(self.request.get("buy_item"))
+            self.makeOffer("buy", player, int(item), int(unitprice), int(quantity))
+        self.redirect("/")
 
 class CreateHandler(RenderedHandler):
     def get(self):
