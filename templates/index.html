@@ -1,3 +1,5 @@
+<head><title>an internet economy</title><head>
+<html>
 {% if user %}
 <h2>Me</h2>
 Name: <form method="post" action="/user"><input type="text" value="{{username}}" name="username"><input type="submit" value="set"></form><br>
@@ -25,12 +27,18 @@ Building: Type: {{b.buildingType.name}} state: {{b.buildingState}}  <br>
 
 {% endfor %}
 
-I want to sell <x> for <this much>
+<form method="post" action="/order">
+I want to sell <input type="text" size="3" name="quantity"> items of xx at $<input type="text" size="3" name="unitprice"> each
+<input type="submit" value="place offer" name="order">
 
-
-I want to buy <x> for <this much>
+<p>
+I want to buy <input type="text" size="3" name="quantity"> items of xx at $<input type="text" size="3" name="unitprice"> each
+<input type="submit" value="place order" name="order">
+</form>
 
 <a href="{{logout_url}}">logout</a>
 {% else %}
 <a href="{{login_url}}">login</a>
 {% endif %}
+
+</html>

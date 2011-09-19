@@ -14,6 +14,13 @@ import os.path
 from model import *
 
 class RenderedHandler(webapp.RequestHandler):
+    def getPlayer(self):
+        user = users.get_current_user()
+        if not user:
+            self.redirect(users.create_login_url(self.request.uri))
+        q = db.GqlQuery("SELECT * FROM Player WHERE user = :1", user)
+        return q.get()
+
     def render(self, templatefile, data):
         path = os.path.join(os.path.dirname(__file__), "templates", templatefile)
         self.response.out.write(template.render(path, data))
@@ -24,36 +31,35 @@ class MainHandler(RenderedHandler):
 
     def get(self):
         user = users.get_current_user()
+        if not user:
+            data = {
+                "login_url": users.create_login_url(self.request.uri)
+            }
+            self.render("index.html", data)
+            return
 
-        n = ""
-        money = 0
         numLand = 0
         landList = []
         buildingList = []
-        if user:
-            q = db.GqlQuery("SELECT * FROM Player WHERE user = :1", user)
-            thisuser = q.get()
-            if not thisuser:
-                thisuser = Player()
-                thisuser.name = user.nickname()
-                thisuser.capital = self.getDefaultCapital()
-                thisuser.put()
-            n = thisuser.name
-            money = thisuser.capital
 
-            landList = Land.all()
-            landList.filter("owner =", thisuser)
-            numLand = landList.count()
-            buildingList = []
-            for l in landList:
-                bld = Building.all()
-                bld.filter("land =",l)
-                for b in bld:
-                    buildingList.append(b)
+        player = self.getPlayer()
+        if not player:
+            player = Player()
+            player.name = user.nickname()
+            player.capital = self.getDefaultCapital()
+            player.put()
 
-        data = {"money": money,
-                "username": n,
-                "login_url": users.create_login_url(self.request.uri),
+        landList = Land.all()
+        landList.filter("owner =", player)
+        numLand = landList.count()
+        for l in landList:
+            bld = Building.all()
+            bld.filter("land =",l)
+            for b in bld:
+                buildingList.append(b)
+
+        data = {"money": player.capital,
+                "username": player.name,
                 "logout_url": users.create_logout_url(self.request.uri),
                 "user": user,
                 "numberLand": numLand,
@@ -78,27 +84,29 @@ class BuyHandler(RenderedHandler):
         player.put()
 
     def post(self):
-        user = users.get_current_user()
-        if not user:
-            self.redirect(users.create_login_url(self.request.uri))
-        q = db.GqlQuery("SELECT * FROM Player WHERE user = :1", user)
-        player = q.get()
+        player = self.getPlayer()
         self.buyLand(player, self.getValueOfLand(1))
         self.redirect("/")
 
 # Handler to get name change information, store it, and redirect back to the homepage
 class UserHandler(RenderedHandler):
     def post(self):
-        user = users.get_current_user()
-        if not user:
-            self.redirect(users.create_login_url(self.request.uri))
-        user = users.get_current_user()
-        playerlist = Player.all()
-        playerlist.filter("user =", user)
-        thisplayer = playerlist.get()
-        thisplayer.name = cgi.escape(self.request.get("username"))
-        thisplayer.put()
+        player = self.getPlayer()
+        player.name = cgi.escape(self.request.get("username"))
+        player.put()
         self.redirect("/")
+
+class OrderHandler(RenderedHandler):
+    def post(self):
+        player = self.getPlayer()
+        orderType = cgi.escape(self.request.get("order"))
+        quantity = cgi.escape(self.request.get("quantity"))
+        unitprice = cgi.escape(self.request.get("unitprice"))
+        item = cgi.escape(self.request.get("item"))
+        if orderType == "place offer":
+            pass
+        elif orderType == "place order":
+            pass
 
 class CreateHandler(RenderedHandler):
     def get(self):
@@ -126,7 +134,8 @@ def main():
         ("/user", UserHandler),
         ("/", MainHandler),
         ("/make", CreateHandler),
-        ("/buy", BuyHandler)
+        ("/buy", BuyHandler),
+        ("/order", OrderHandler)
     ]
     application = webapp.WSGIApplication(handlers,
                                          debug=True)
