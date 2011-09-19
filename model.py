@@ -67,6 +67,7 @@ class Offer(db.Model):
     offeredPrice = db.IntegerProperty()
     offerExpireTimestamp = db.DateTimeProperty()
     isDivisible = db.BooleanProperty()
+    deliveryLand = db.ReferenceProperty(Land)
 
 # A completed transaction
 class Transaction(db.Model):
