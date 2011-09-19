@@ -31,7 +31,7 @@ Land units owned: {{numberLand}}:
 <h2>Orders</h2>
 <h3>All Outstanding offers</h3>
 {% for o in offers %}
-<li>{{o.player.name}} wants to {{o.transactionType}} {{o.quantity}} {{o.resourceType.name}} at {{o.offeredPrice}} each
+<li>{{o.player.name}} wants to {{o.transactionType}} {{o.quantity}} {{o.resourceType.name}} at ${{o.offeredPrice}} each
 {% endfor %}
 
 <h3>Make an offer</h3>
@@ -39,7 +39,7 @@ Land units owned: {{numberLand}}:
 I want to sell <input type="text" size="3" name="sell_quantity"> items of 
 <select size="1" name="sell_item">
 {% for r in resources %}
-<option value="{{r.key.id}}">{{r.resourceType.name}}</option>
+<option value="{{r.resourceType.key.id}}">{{r.resourceType.name}}</option>
 {% endfor %}
 </select>
  at $<input type="text" size="3" name="sell_unitprice"> each

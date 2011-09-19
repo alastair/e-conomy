@@ -80,7 +80,7 @@ class MainHandler(RenderedHandler):
                 "buildings": buildingList,
                 "resources": resourceList,
                 "resourceTypes": resourceTypeList,
-                "outstandingOrders": offers
+                "offers": offers
                 }
  
         self.render("index.html", data)
