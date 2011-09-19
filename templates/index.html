@@ -1,26 +1,33 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+            "http://www.w3.org/TR/html4/loose.dtd">
 <head><title>an internet economy</title><head>
-<html>
+<body>
 {% if user %}
 <h2>Me</h2>
 Name: <form method="post" action="/user"><input type="text" value="{{username}}" name="username"><input type="submit" value="set"></form><br>
 Money: {{money}}
 <h2>Land</h2>
-Land units owned: {{numberLand}} <br>
+Land units owned: {{numberLand}}:
+<ul>
 {% for l in land %}
-Land: X: {{l.x}} Y: {{l.y}} value: {{l.value}}<br>
+<li>Land: X: {{l.x}} Y: {{l.y}} value: {{l.value}}</li>
 {% endfor %}
-
-Buy more land:<form method="post" action="/buy"><input type="submit" value="buy"></form><br>
+</ul>
+<p>Buy more land:<form method="post" action="/buy"><input type="submit" value="buy"></form></p>
 
 <h2>Buildings</h2>
+<ul>
 {% for b in buildings %}
-Building: Type: {{b.buildingType.name}} state: {{b.buildingState}}  <br>
+<li>Building: Type: {{b.buildingType.name}} state: {{b.buildingState}}</li>
 {% endfor %}
+</ul>
 
 <h2>Resources</h2>
+<ul>
 {% for r in resources %}
-Resource: Type: {{r.resourceType.name}} quantity: {{r.quantity}} <br/>
+<li>Resource: Type: {{r.resourceType.name}} quantity: {{r.quantity}}</li>
 {% endfor %}
+</ul>
 <h2>Orders</h2>
 <h3>Outstanding orders</h3>
 {% for o in orders %}
@@ -40,5 +47,5 @@ I want to buy <input type="text" size="3" name="quantity"> items of xx at $<inpu
 {% else %}
 <a href="{{login_url}}">login</a>
 {% endif %}
-
+</body>
 </html>
