@@ -51,6 +51,13 @@ class MainHandler(RenderedHandler):
                 for b in bld:
                     buildingList.append(b)
 
+	    resourceList = []
+            for l in landList:
+                res = Resource.all()
+                res.filter("land =",l)
+                for r in res:
+                    resourceList.append(r)
+
         data = {"money": money,
                 "username": n,
                 "login_url": users.create_login_url(self.request.uri),
@@ -58,7 +65,8 @@ class MainHandler(RenderedHandler):
                 "user": user,
                 "numberLand": numLand,
                 "land": landList,
-                "buildings": buildingList
+                "buildings": buildingList,
+		"resources": resourceList
                 }
  
         self.render("index.html", data)
