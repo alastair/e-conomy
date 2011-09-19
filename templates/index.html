@@ -29,12 +29,12 @@ Land units owned: {{numberLand}}:
 {% endfor %}
 </ul>
 <h2>Orders</h2>
-<h3>All Outstanding orders</h3>
+<h3>All Outstanding offers</h3>
 {% for o in offers %}
 <li>{{o.player.name}} wants to {{o.transactionType}} {{o.quantity}} {{o.resourceType.name}} at {{o.offeredPrice}} each
 {% endfor %}
 
-<h3>Make an order</h3>
+<h3>Make an offer</h3>
 <form method="post" action="/order">
 I want to sell <input type="text" size="3" name="sell_quantity"> items of 
 <select size="1" name="sell_item">

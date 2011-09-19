@@ -68,7 +68,7 @@ class MainHandler(RenderedHandler):
         resourceTypeList = ResourceType.all()
         resourceTypeList = sorted(resourceTypeList, key=lambda r: r.name)
 
-        offers = Offers.all()
+        offers = Offer.all()
 
         data = {"money": player.capital,
                 "username": player.name,
