@@ -58,11 +58,19 @@ class Building(db.Model):
     buildingState = db.StringProperty()
     lastEvent = db.DateTimeProperty()
 
-class OrderBook(db.Model):
+# an offer to buy or sell a quantity at a price
+class Offer(db.Model):
     player = db.ReferenceProperty(Player)
-    transactionType = db.StringProperty()
-    resource = db.ReferenceProperty(Resource)
+    transactionType = db.StringProperty() # buy/sell
+    resourceType = db.ReferenceProperty(ResourceType)
     quantity = db.IntegerProperty()
     offeredPrice = db.IntegerProperty()
     offerExpireTimestamp = db.DateTimeProperty()
     isDivisible = db.BooleanProperty()
+
+# A completed transaction
+class Transaction(db.Model):
+    offer = db.ReferenceProperty(Offer)
+    otherParty = db.ReferenceProperty(Player)
+    actualQuantity = db.IntegerProperty()
+    actualPrice = db.IntegerProperty()
