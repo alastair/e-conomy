@@ -127,27 +127,69 @@ class OrderHandler(RenderedHandler):
 	user = users.get_current_user()
         resType = ResourceType.get_by_id(item)
         matchType = ''
+	transDirection = 1 # Currency is always deducted from 'player' and added to 'otherParty'
 
 	r = Offer.all()
         if transactType == "buy":
             matchType = 'sell'
+	    r.order('offeredPrice')
 	else:
             matchType = 'buy'
+	    r.order('-offeredPrice')
+	    transDirection = -1
 
         r.filter('resourceType =', resType)
         r.filter('transactionType =', matchType)
 
 	offers = []
 	for of in r:
-	    if of.player == player:
+	    if of.player.key() == player.key():
 		continue
-
 	    offers.append(of)
 
-	data = {'user': user, 'offers': offers}
-    
-	self.render("offers.html", data)
+	toFulfill = quantity
+	for o in offers:
+	    if toFulfill == 0:
+		break
 
+	    if transactType == 'buy' and o.offeredPrice > unitprice:
+		break
+
+	    if transactType == 'sell' and o.offeredPrice < unitprice:
+		break
+
+	    # We have an acceptable offer. Now grab as many as we can up to
+	    # quantity, reducing the quantity available in the offer.
+	    if o.quantity == 0:
+		continue
+
+	    if toFulfill >= o.quantity:
+		toFulfill = toFulfill - o.quantity
+		q = o.quantity
+		o.quantity = 0
+		o.put()
+		t = Transaction()
+		t.offer = o
+		t.otherParty = o.player
+		t.actualQuantity = q
+		t.actualPrice = o.offeredPrice
+		t.put()
+		player.capital = player.capital 
+
+	    if toFulfill < o.quantity:
+		o.quantity = o.quantity - toFulfill
+		o.put()
+		t = Transaction()
+		t.offer = o
+		t.otherParty = o.player
+		t.actualQuantity = toFulfill
+		t.actualPrice = o.offeredPrice
+		t.put()
+		toFulfill = 0
+
+	return toFulfill
+	   
+ 
     def post(self):
         player = self.getPlayer()
         orderType = cgi.escape(self.request.get("order"))
@@ -156,16 +198,18 @@ class OrderHandler(RenderedHandler):
             quantity = cgi.escape(self.request.get("sell_quantity"))
             unitprice = cgi.escape(self.request.get("sell_unitprice"))
             item = cgi.escape(self.request.get("sell_item"))
-	    self.matchOffer("sell", player, int(item), int(unitprice), int(quantity))
-            self.makeOffer("sell", player, int(item), int(unitprice), int(quantity))
+	    f = self.matchOffer("sell", player, int(item), int(unitprice), int(quantity))
+	    if f > 0:
+		self.makeOffer("sell", player, int(item), int(unitprice), f)
         elif orderType == "place order":
             # buy
             quantity = cgi.escape(self.request.get("buy_quantity"))
             unitprice = cgi.escape(self.request.get("buy_unitprice"))
             item = cgi.escape(self.request.get("buy_item"))
-	    self.matchOffer("buy", player, int(item), int(unitprice), int(quantity))
-            self.makeOffer("buy", player, int(item), int(unitprice), int(quantity))
-        #self.redirect("/")
+	    f = self.matchOffer("buy", player, int(item), int(unitprice), int(quantity))
+	    if f > 0:
+		self.makeOffer("buy", player, int(item), int(unitprice), f)
+        self.redirect("/")
 
 class CreateHandler(RenderedHandler):
     def get(self):
@@ -185,7 +229,7 @@ class CreateHandler(RenderedHandler):
         rc.put()
         b = Building()
         b.put()
-        ob = OrderBook()
+        ob = Transaction()
         ob.put()
 
 def main():
