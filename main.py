@@ -114,13 +114,14 @@ class UserHandler(RenderedHandler):
         self.redirect("/")
 
 class OrderHandler(RenderedHandler):
-    def makeOffer(self, transactType, player, item, unitprice, quantity):
+    def makeOffer(self, transactType, player, item, unitprice, quantity, delivery):
         o = Offer()
         o.player = player
         o.transactionType = transactType
         o.resourceType = ResourceType.get_by_id(item)
         o.quantity = quantity
         o.offeredPrice = unitprice
+	o.deliveryLand = Land.get_by_id(delivery)
         # XXX: expiry, isDivisible
         o.put()
 
@@ -198,7 +199,7 @@ class OrderHandler(RenderedHandler):
             quantity = cgi.escape(self.request.get("sell_quantity"))
             unitprice = cgi.escape(self.request.get("sell_unitprice"))
             item = cgi.escape(self.request.get("sell_item"))
-	    f = self.matchOffer("sell", player, int(item), int(unitprice), int(quantity))
+	    f = self.matchOffer("sell", player, int(item), int(unitprice), int(quantity), int(delivery))
 	    if f > 0:
 		self.makeOffer("sell", player, int(item), int(unitprice), f)
         elif orderType == "place order":
@@ -209,7 +210,7 @@ class OrderHandler(RenderedHandler):
 	    delivery = cgi.escape(self.request.get("delivery_loc"))
 	    f = self.matchOffer("buy", player, int(item), int(unitprice), int(quantity), int(delivery))
 	    if f > 0:
-		self.makeOffer("buy", player, int(item), int(unitprice), f)
+		self.makeOffer("buy", player, int(item), int(unitprice), f, int(delivery))
         self.redirect("/")
 
 class CreateHandler(RenderedHandler):
