@@ -59,14 +59,16 @@ class MainHandler(RenderedHandler):
                 buildingList.append(b)
         
         resourceList = []
-        for l in landList:
-            res = Resource.all()
-            res.filter("land =",l)
-            for r in res:
-                resourceList.append(r)
+        res = Inventory.all()
+        res.filter("player =", player)
+        for r in res:
+            resourceList.append(r)
 
         resourceTypeList = ResourceType.all()
         resourceTypeList = sorted(resourceTypeList, key=lambda r: r.name)
+
+	buildingTypeList = BuildingType.all()
+	buildingTypeList = sorted(buildingTypeList, key=lambda r: r.name)
 
         offers = Offer.all()
 	offers.filter('quantity >', 0)
@@ -79,6 +81,7 @@ class MainHandler(RenderedHandler):
                 "numberLand": numLand,
                 "land": landList,
                 "buildings": buildingList,
+		"buildingTypes": buildingTypeList,
                 "resources": resourceList,
                 "resourceTypes": resourceTypeList,
                 "offers": offers
@@ -93,10 +96,15 @@ class BuyHandler(RenderedHandler):
     def buyLand(self, player, value):
         if player.capital < value:
             return
-        l = Land()
+	max_x = Land.all().order('-x').get().x
+        
+	l = Land()
         l.value = value
         l.owner = player
+	l.x = max_x + 1
+	l.y = 1
         l.put()
+
         player.capital -= value
         player.put()
 
@@ -114,18 +122,17 @@ class UserHandler(RenderedHandler):
         self.redirect("/")
 
 class OrderHandler(RenderedHandler):
-    def makeOffer(self, transactType, player, item, unitprice, quantity, delivery):
+    def makeOffer(self, transactType, player, item, unitprice, quantity):
         o = Offer()
         o.player = player
         o.transactionType = transactType
         o.resourceType = ResourceType.get_by_id(item)
         o.quantity = quantity
         o.offeredPrice = unitprice
-	o.deliveryLand = Land.get_by_id(delivery)
         # XXX: expiry, isDivisible
         o.put()
 
-    def matchOffer(self, transactType, player, item, unitprice, quantity, delivery=None):
+    def matchOffer(self, transactType, player, item, unitprice, quantity):
 	user = users.get_current_user()
         resType = ResourceType.get_by_id(item)
         matchType = ''
@@ -194,26 +201,38 @@ class OrderHandler(RenderedHandler):
 
 	    if transactType == 'sell':
 		self.doCurrencyTransfer(nFilled * o.offeredPrice, o.player, player)
+		self.doResourceTransfer(resType,player,nFilled,o.player)
 	    else:
 		self.doCurrencyTransfer(nFilled * o.offeredPrice, player, o.player)
+		self.doResourceTransfer(resType,o.player,nFilled,player)
 
 	return toFulfill
 
-    def doResourceTransfer(self,resource,quantity,destination):
-	if resource.quantity <= quantity:
-	    resource.land = destination
-	    resource.put()
-	else:
-	    # We need to split the resource
-	    newres = Resource()
-	    newres.land = destination
-	    newres.quantity = quantity
-	    newres.birthTimeStamp = resource.birthTimeStamp
-	    newres.resourceType = resource.resourceType
-	    resource.quantity = resource.quantity - quantity
-	    newres.put()
-	    resource.put()
+    # TODO: wrap this in a transaction
+    def doResourceTransfer(self,resourceType,src,quantity,dst):
+        inventory = Inventory.all()
+        inventory.filter('player =', src)
+        inventory.filter('resourceType =', resourceType)
+        srcEnt = inventory.get()
 
+        dstInv = Inventory.all()
+        dstInv.filter('player =', dst)
+        dstInv.filter('resourceType =', resourceType)
+        dstEnt = dstInv.get()
+
+        if dstEnt == None:
+            dstEnt = Inventory()
+            dstEnt.resourceType = resourceType
+            dstEnt.quantity = 0
+            dstEnt.player = dst
+
+        srcEnt.quantity = srcEnt.quantity - quantity
+        dstEnt.quantity = dstEnt.quantity + quantity
+
+        srcEnt.put()
+        dstEnt.put()
+
+    # TODO: wrap this in a transaction
     def doCurrencyTransfer(self,amount,src,target):
 	src.capital = src.capital - amount
 	target.capital = target.capital + amount
@@ -228,7 +247,7 @@ class OrderHandler(RenderedHandler):
             quantity = cgi.escape(self.request.get("sell_quantity"))
             unitprice = cgi.escape(self.request.get("sell_unitprice"))
             item = cgi.escape(self.request.get("sell_item"))
-	    f = self.matchOffer("sell", player, int(item), int(unitprice), int(quantity), int(delivery))
+	    f = self.matchOffer("sell", player, int(item), int(unitprice), int(quantity))
 	    if f > 0:
 		self.makeOffer("sell", player, int(item), int(unitprice), f)
         elif orderType == "place order":
@@ -236,11 +255,14 @@ class OrderHandler(RenderedHandler):
             quantity = cgi.escape(self.request.get("buy_quantity"))
             unitprice = cgi.escape(self.request.get("buy_unitprice"))
             item = cgi.escape(self.request.get("buy_item"))
-	    delivery = cgi.escape(self.request.get("delivery_loc"))
-	    f = self.matchOffer("buy", player, int(item), int(unitprice), int(quantity), int(delivery))
+	    f = self.matchOffer("buy", player, int(item), int(unitprice), int(quantity))
 	    if f > 0:
-		self.makeOffer("buy", player, int(item), int(unitprice), f, int(delivery))
+		self.makeOffer("buy", player, int(item), int(unitprice), f)
         self.redirect("/")
+
+class BuildHandler(RenderedHandler):
+    def post(self):
+	self.redirect("/")
 
 class CreateHandler(RenderedHandler):
     def get(self):
@@ -248,7 +270,7 @@ class CreateHandler(RenderedHandler):
         l.put()
         rt = ResourceType()
         rt.put()
-        r = Resource()
+        r = Inventory()
         r.put()
         lr = LandResources()
         lr.put()
@@ -269,7 +291,8 @@ def main():
         ("/", MainHandler),
         ("/make", CreateHandler),
         ("/buy", BuyHandler),
-        ("/order", OrderHandler)
+        ("/order", OrderHandler),
+	("/build", BuildHandler)
     ]
     application = webapp.WSGIApplication(handlers,
                                          debug=True)

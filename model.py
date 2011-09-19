@@ -16,15 +16,20 @@ class ResourceType(db.Model):
     name = db.StringProperty(default="")
     valueHalfLife = db.IntegerProperty()
 
-class Resource(db.Model):
-    land = db.ReferenceProperty(Land)
+class Inventory(db.Model):
+    player = db.ReferenceProperty(Player)
     resourceType = db.ReferenceProperty(ResourceType)
     quantity = db.IntegerProperty()
-    birthTimeStamp = db.DateTimeProperty()
+
+#class Resource(db.Model):
+#    land = db.ReferenceProperty(Land)
+#    resourceType = db.ReferenceProperty(ResourceType)
+#    quantity = db.IntegerProperty()
+#    birthTimeStamp = db.DateTimeProperty()
 
 class LandResources(db.Model):
     land = db.ReferenceProperty(Land)
-    resource = db.ReferenceProperty(Resource)
+    resourceType = db.ReferenceProperty(ResourceType)
     quantity = db.IntegerProperty()
     growthRate = db.FloatProperty()
     exploitationRate = db.FloatProperty()
@@ -47,7 +52,7 @@ class BuildingType(db.Model):
 # This gives more information to a building type - 
 # an input resource, output resource, how much it takes to make
 class ResourceCombination(db.Model):
-    resource = db.ReferenceProperty(Resource)
+    resourceType = db.ReferenceProperty(ResourceType)
     quantity = db.IntegerProperty()
     type = db.StringProperty() #input or output
     buildingType = db.ReferenceProperty(BuildingType)

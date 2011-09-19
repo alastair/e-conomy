@@ -10,7 +10,17 @@ Money: {{money}}
 Land units owned: {{numberLand}}:
 <ul>
 {% for l in land %}
-<li>Land: X: {{l.x}} Y: {{l.y}} value: {{l.value}}</li>
+<li>Land: X: {{l.x}} Y: {{l.y}} value: {{l.value}}
+<form method="post" action="/build">
+<input type="hidden" name="landid" value="{{l.key.id}}" />
+<ul>
+<li>New <select size="1" name="build_type">
+{% for b in buildingTypes %}
+<option value="{{b.key.id}}">{{b.name}}</option>
+{% endfor %}
+</select> <input type="submit" value="Build" name="newbuild"/></li>
+</ul></form>
+</li>
 {% endfor %}
 </ul>
 <p>Buy more land:<form method="post" action="/buy"><input type="submit" value="buy"></form></p>
@@ -52,12 +62,7 @@ I want to buy <input type="text" size="3" name="buy_quantity"> items of
 <option value="{{r.key.id}}">{{r.name}}</option>
 {% endfor %}
 </select>
-at $<input type="text" size="3" name="buy_unitprice"> each,
- delivered to
-<select size="1" name="delivery_loc">
-{% for l in land %}
-<option value="{{l.key.id}}">{{l.x}}, {{l.y}}</option>
-{% endfor %}
+at $<input type="text" size="3" name="buy_unitprice"> each 
 <input type="submit" value="place order" name="order">
 </form>
 
